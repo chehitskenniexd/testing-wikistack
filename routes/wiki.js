@@ -37,7 +37,7 @@ router.post('/', function (req, res, next) {
             });
 
             var thenRelatingAuthor = creatingPage.then(function (createdPage) { // Nested .then so we can remember `user`
-                return createdPagef(user);
+                return createdPage.setAuthor(user);
             });
 
             return thenRelatingAuthor;
