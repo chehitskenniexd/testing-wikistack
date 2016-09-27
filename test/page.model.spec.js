@@ -1,3 +1,11 @@
+var blue = function(val) {
+	console.log(chalk.blue(val));
+}
+
+var blueJ = function(val) {
+	blue(JSON.stringify(val));
+}
+
 var models = require('../models');
 var Page = models.Page;
 var User = models.User;
@@ -9,32 +17,90 @@ var spies = require('chai-spies');
 chai.use(spies);
 
 describe('Page model', function () {
+	var page;
+
+	beforeEach(function (done) {
+	  Page.create({
+	    title: 'Foo Bar!',
+	    content: '## Foo Bar Taz',
+	    tags: ['foo', 'bar', 'taz']
+	  })
+	  .then(function () {
+	    done();
+	  })
+	  .catch(done);
+	});
+
+	afterEach(function (done) {
+	  Page.destroy( {
+	  		where : { urlTitle: 'Foo_Bar' }
+	  	}
+	  )
+	  .then(function () {
+	    done();
+	  })
+	  .catch(done);
+	});
+
   describe('Virtuals', function () {
+
+  	beforeEach(function (done) {
+	  Page.findOne({
+	    where: { title: 'Foo Bar!' }
+	  })
+	  .then(function (val) {
+	  	page = val;
+	    done();
+	  })
+	  .catch(done);
+	});
+
     describe('route', function () {
-      it('returns the url_name prepended by "/wiki/"', (done) => {
-
-      	var page = Page.build({title: "My Title!", content: "## This is Sparta...", status: "open", tags: "a, b, c, d", urlTitle: "My_Title"});
-
-      	expect(page.route).to.be.equal("/wiki/My_Title");
+      it('returns the url_name prepended by "/wiki/"', done => {
+      	expect(page.route).to.be.equal("/wiki/Foo_Bar");
       	done();
-
       });
     });
     describe('renderedContent', function () {
       it('converts the markdown-formatted content into HTML', done => {
-      	var page = Page.build({title: "My Title!", content: "## This is Sparta...", status: "open", tags: "a, b, c, d", urlTitle: "My_Title"});
-		expect(page.renderedContent).to.be.equal('<h2 id="this-is-sparta-">This is Sparta...</h2>\n');
+		expect(page.renderedContent).to.be.equal('<h2 id="foo-bar-taz">Foo Bar Taz</h2>\n');
 		done();
     	});
 	});
-
-
   });
 
   describe('Class methods', function () {
+
+  	beforeEach(function (done) {
+	  Page.findOne({
+	    where: { title: 'Foo Bar!' }
+	  })
+	  .then(function (val) {
+	  	page = val;
+	    done();
+	  })
+	  .catch(done);
+	});
+
     describe('findByTag', function () {
-      it('gets pages with the search tag');
-      it('does not get pages without the search tag');
+      it('gets pages with the search tag', done => {
+      	Page.findByTag('foo')
+      		.then(results => {
+      			// blueJ(results);
+      			expect(results[0].urlTitle).to.be.equal(page.urlTitle);
+      		})
+      		.catch(done);
+      	done();
+      });
+      it('does not get pages without the search tag', done => {
+      	Page.findByTag('oof')
+      		.then(results => {
+      			// blueJ(results);
+      			expect(results.length).to.be.equal(0);
+      		})
+      		.catch(done);
+      	done();
+      });
     });
   });
 
